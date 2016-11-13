@@ -1,6 +1,8 @@
 #pragma once
 
 #include <string>
+#include <array>
+#include <algorithm>
 
 /*
 # Concept
@@ -28,53 +30,100 @@ A table is defined by:
 * maybe constraints later
 */
 
-namespace detail {
-	// FIXME: this should be a lot simpler with fold expressions
-	template< typename = void, typename... >
-	void create_tables();
-	template<>
-	void create_tables< void >() {
-	}
-	template< typename Table, typename... Tables >
-	void create_tables() {
-		static_assert( table_definition< Table >::is_valid, "missing table definition" ); // getting this error means you need to specialize table_definition for your type using make_table_definition
-		create_tables< Tables... >();
-	}
-}
-
-// struct used like a namespace so we can inherit from private classes
-struct orm {
+/// @author Scott Schurr, Willi Schinmeyer
+class str_const { // constexpr string
 public:
-	template< typename... >
-	struct table_definition {
+	template< std::size_t N >
+	constexpr str_const( const char( &a )[ N ] )
+		: _data( a )
+		, _size( N - 1 ) {
+	}
+	constexpr const char operator[]( std::size_t n ) const {
+		return n < _size ? _data[ n ] :
+			throw std::out_of_range( "" );
+	}
+	constexpr const std::size_t size() const {
+		return _size;
+	}
+	constexpr const bool operator==( const str_const& rhs ) const {
+		return size() == rhs.size() && ( size() == 0 || ( _data[ 0 ] == rhs[ 0 ] && str_const{ _data + 1, _size - 1 } == str_const{ rhs._data + 1, rhs._size - 1 } ) );
+	}
+private:
+	constexpr str_const( const char* const data, const std::size_t size )
+		: _data( data )
+		, _size( size ) {
+	}
+
+	const char* const _data;
+	const std::size_t _size;
+};
+
+// Type-Safe SQL Statements
+namespace sql {
+	struct create {
+		str_const name;
 	};
 
+	template< std::size_t size >
+	using creates = const std::array< create, size >;
+}
+
+struct table_definition {
+	const str_const name;
+};
+
+template< typename TableType >
+constexpr const table_definition get_table_definition() {
+	static_assert( false, "no table definition defined for this type" );
+}
+
+// struct used like a namespace so we can inherit from private classes, hiding implementation details
+struct orm {
 private:
 	/// Variadic Template end-of-list tag
 	struct eol {
 	};
 
+	// Create Table
+
+	template< typename TableType >
+	static constexpr const sql::create create() {
+		return {
+			get_table_definition< TableType >().name,
+		};
+	}
+
+	template< typename... TableTypes >
+	static constexpr const sql::creates< sizeof...( TableTypes ) > create_all() {
+		return { create< TableTypes >()... };
+	}
+
+	// Per-Type 
+
 	template< typename... InvalidArguments >
 	struct mapper_impl {
 		mapper_impl() {
-			static_assert( false, "mapper created with non-tabledefinition template argument" );
+			static_assert( false, "logic error: template not fully specialized" );
 		}
 	};
 
-	// termination
 	template<>
 	struct mapper_impl< eol > {
 	};
 
-	template< typename... TableDefinitionArgs, typename... TableDefinitions >
-	struct mapper_impl< table_definition< TableDefinitionArgs... >, TableDefinitions... >
-		: mapper_impl< TableDefinitions... > {
+	template< typename TableType, typename... TableTypes >
+	struct mapper_impl< TableType, TableTypes... >
+		: mapper_impl< TableTypes... > {
 	};
 
 public:
 
-	template< typename... TableDefinitions >
-	struct mapper : mapper_impl< TableDefinitions..., eol > {
+	template< typename... TableTypes >
+	struct mapper
+		: mapper_impl< TableTypes..., eol > {
+		constexpr const auto create() const {
+			return create_all< TableTypes... >();
+		}
 	};
 };
 
@@ -83,3 +132,10 @@ struct Person {
 	std::string name;
 	std::size_t father;
 };
+
+template<>
+constexpr const table_definition get_table_definition< Person >() {
+	return table_definition{
+		"person"
+	};
+}
