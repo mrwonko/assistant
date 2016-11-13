@@ -42,31 +42,44 @@ namespace detail {
 	}
 }
 
-template< typename... Tables >
-class mapper {
+// struct used like a namespace so we can inherit from private classes
+struct orm {
 public:
-	void create_tables() {
-		detail::create_tables< Tables... >();
-	}
-};
+	template< typename... >
+	struct table_definition {
+	};
 
-template< typename T >
-struct table_definition {
-	static constexpr bool is_valid = false;
-};
+private:
+	/// Variadic Template end-of-list tag
+	struct eol {
+	};
 
-struct make_table_definition {
-	static constexpr bool is_valid = true;
-	// more info goes here, coming in via future template parameters
-};
+	template< typename... InvalidArguments >
+	struct mapper_impl {
+		mapper_impl() {
+			static_assert( false, "mapper created with non-tabledefinition template argument" );
+		}
+	};
 
+	// termination
+	template<>
+	struct mapper_impl< eol > {
+	};
+
+	template< typename... TableDefinitionArgs, typename... TableDefinitions >
+	struct mapper_impl< table_definition< TableDefinitionArgs... >, TableDefinitions... >
+		: mapper_impl< TableDefinitions... > {
+	};
+
+public:
+
+	template< typename... TableDefinitions >
+	struct mapper : mapper_impl< TableDefinitions..., eol > {
+	};
+};
 
 struct Person {
 	std::size_t id;
 	std::string name;
 	std::size_t father;
-};
-
-template<>
-struct table_definition<Person> : make_table_definition {
 };
