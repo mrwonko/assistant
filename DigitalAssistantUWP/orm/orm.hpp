@@ -3,6 +3,7 @@
 #include <string>
 #include <array>
 #include <algorithm>
+#include <tuple>
 
 /*
 # Concept
@@ -68,12 +69,29 @@ namespace sql {
 	using creates = const std::array< create, size >;
 }
 
-struct table_definition {
+template< typename TableType, typename ColumnType >
+struct column_definition {
+	using type = ColumnType;
 	const str_const name;
 };
 
+template< typename TableType, typename... ColumnTypes >
+using column_definitions = std::tuple< column_definition< TableType, ColumnTypes >... >;
+
+template< typename TableType, typename... ColumnTypes >
+struct table_definition {
+	using type = TableType;
+	const str_const name;
+	const column_definitions< TableType, ColumnTypes... > columns;
+};
+
 template< typename TableType >
-constexpr const table_definition get_table_definition() {
+struct table_definition_type {
+	using type = table_definition< TableType >;
+};
+
+template< typename TableType >
+constexpr const typename table_definition_type< TableType >::type get_table_definition() {
 	static_assert( false, "no table definition defined for this type" );
 }
 
@@ -88,14 +106,14 @@ private:
 
 	template< typename TableType >
 	static constexpr const sql::create create() {
-		return {
+		return{
 			get_table_definition< TableType >().name,
 		};
 	}
 
 	template< typename... TableTypes >
 	static constexpr const sql::creates< sizeof...( TableTypes ) > create_all() {
-		return { create< TableTypes >()... };
+		return{ create< TableTypes >()... };
 	}
 
 	// Per-Type 
@@ -134,8 +152,18 @@ struct Person {
 };
 
 template<>
-constexpr const table_definition get_table_definition< Person >() {
-	return table_definition{
-		"person"
+struct table_definition_type< Person > {
+	using type = table_definition< Person, std::size_t, std::string, std::size_t >;
+};
+
+template<>
+constexpr const table_definition_type< Person >::type get_table_definition< Person >() {
+	return{
+		"person",
+		{
+			{ "id" },
+			{ "name" },
+			{ "father" },
+		},
 	};
 }
