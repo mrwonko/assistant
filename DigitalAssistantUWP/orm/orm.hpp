@@ -71,8 +71,16 @@ namespace sql {
 
 template< typename TableType, typename ColumnType >
 struct column_definition {
+	/// type of the class/table this is a member/column of
+	using table_type = TableType;
+	/// type of the value in the column
 	using type = ColumnType;
+	/// type of pointer to member/column in class/table
+	using pointer_type = const ColumnType TableType::*;
+	/// name of the column in the database
 	const str_const name;
+	/// pointer to member/column in class/table
+	const pointer_type pointer;
 };
 
 template< typename TableType, typename... ColumnTypes >
@@ -85,11 +93,17 @@ struct table_definition {
 	const column_definitions< TableType, ColumnTypes... > columns;
 };
 
+/// table_definition_type defines the type of table definition associated with a given type.
+///
+/// In order to be able to have template-dependent return types in get_table_definition(), we need this separate definition users can specialize.
 template< typename TableType >
 struct table_definition_type {
 	using type = table_definition< TableType >;
 };
 
+/// get_table_definition returns the table definition for a given type. Users should specialize this for types they want to persist.
+/// 
+/// You'll probably want to specialize table_definition_type as well.
 template< typename TableType >
 constexpr const typename table_definition_type< TableType >::type get_table_definition() {
 	static_assert( false, "no table definition defined for this type" );
@@ -144,26 +158,3 @@ public:
 		}
 	};
 };
-
-struct Person {
-	std::size_t id;
-	std::string name;
-	std::size_t father;
-};
-
-template<>
-struct table_definition_type< Person > {
-	using type = table_definition< Person, std::size_t, std::string, std::size_t >;
-};
-
-template<>
-constexpr const table_definition_type< Person >::type get_table_definition< Person >() {
-	return{
-		"person",
-		{
-			{ "id" },
-			{ "name" },
-			{ "father" },
-		},
-	};
-}
