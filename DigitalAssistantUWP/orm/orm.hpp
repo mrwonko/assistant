@@ -4,8 +4,10 @@
 #include <array>
 #include <algorithm>
 #include <tuple>
+#include <cstddef> // std::size_t
 
 #include "str_const.hpp"
+#include "sql.hpp"
 
 /*
 # Concept
@@ -32,16 +34,6 @@ A table is defined by:
 * fields
 * maybe constraints later
 */
-
-// Type-Safe SQL Statements
-namespace sql {
-	struct create {
-		str_const name;
-	};
-
-	template< std::size_t size >
-	using creates = const std::array< create, size >;
-}
 
 template< typename TableType, typename ColumnType >
 struct column_definition {

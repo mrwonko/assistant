@@ -149,6 +149,8 @@
     <ClInclude Include="MainPage.xaml.h">
       <DependentUpon>MainPage.xaml</DependentUpon>
     </ClInclude>
+    <ClInclude Include="orm\sql.hpp" />
+    <ClInclude Include="orm\str_const.hpp" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>

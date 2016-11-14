@@ -29,6 +29,12 @@
       <Filter>orm</Filter>
     </ClInclude>
     <ClInclude Include="pch.h" />
+    <ClInclude Include="orm\str_const.hpp">
+      <Filter>orm</Filter>
+    </ClInclude>
+    <ClInclude Include="orm\sql.hpp">
+      <Filter>orm</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="Assets\LockScreenLogo.scale-200.png">
