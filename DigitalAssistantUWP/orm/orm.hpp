@@ -106,11 +106,7 @@ private:
 	// Per-Type 
 
 	template< typename... InvalidArguments >
-	struct mapper_impl {
-		mapper_impl() {
-			static_assert( false, "logic error: template not fully specialized" );
-		}
-	};
+	struct mapper_impl; // unspecialized instantiation illegal
 
 	template<>
 	struct mapper_impl< eol > {
