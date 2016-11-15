@@ -34,14 +34,21 @@ A table is defined by:
 * maybe constraints later
 */
 
-template< typename TableType, typename ColumnType >
-struct column_definition {
-	/// type of the class/table this is a member/column of
-	using table_type = TableType;
+template< typename ColumnType, typename SQLType = ColumnType >
+struct column_type {
 	/// type of the value in the column
 	using type = ColumnType;
+	/// SQL type used for this column
+	using sql_type = SQLType;
+};
+
+template< typename TableType, typename ColumnType, typename SQLType >
+struct column_definition : column_type< ColumnType, SQLType > {
+	/// type of the class/table this is a member/column of
+	using table_type = TableType;
 	/// type of pointer to member/column in class/table
 	using pointer_type = const ColumnType TableType::*;
+
 	/// name of the column in the database
 	const str_const name;
 	/// pointer to member/column in class/table
@@ -49,13 +56,14 @@ struct column_definition {
 };
 
 template< typename TableType, typename... ColumnTypes >
-using column_definitions = std::tuple< column_definition< TableType, ColumnTypes >... >;
+using column_definitions = std::tuple< column_definition< TableType, typename ColumnTypes::type, typename ColumnTypes::sql_type >... >;
 
 template< typename TableType, typename... ColumnTypes >
 struct table_definition {
 	using type = TableType;
+	using columns_type = column_definitions< TableType, ColumnTypes... >;
 	const str_const name;
-	const column_definitions< TableType, ColumnTypes... > columns;
+	const columns_type columns;
 };
 
 /// table_definition_type defines the type of table definition associated with a given type.

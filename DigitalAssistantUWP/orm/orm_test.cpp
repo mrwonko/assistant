@@ -9,7 +9,12 @@ struct Person {
 
 template<>
 struct table_definition_type< Person > {
-	using type = table_definition< Person, std::size_t, std::string, std::size_t >;
+	using type = table_definition<
+		Person,
+		column_type< boost::uuids::uuid >,
+		column_type< std::string >,
+		column_type< boost::uuids::uuid >
+	>;
 };
 
 template<>
