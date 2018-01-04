@@ -4,7 +4,11 @@
 		"sourceMap": true,
 		"strict": true,
 		"module": "commonjs",
-		"jsx": "react"
+		"jsx": "react",
+		"lib": [
+			"dom",
+			"es2015"
+		]
 	},
 	"include": [
 		"./src/**/*"
