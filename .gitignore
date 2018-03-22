@@ -1,0 +1,8 @@
+# ignore anything without an extension, i.e. binaries (see https://stackoverflow.com/questions/19023550)
+# must come first because it whitelists all directories and files with extensions, and we want to blacklist some
+*
+!/**/
+!*.*
+
+*.js
+nimcache/
