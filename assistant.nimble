@@ -2,9 +2,10 @@
 
 version       = "0.1.0"
 author        = "Willi Schinmeyer"
-description   = "Digital Assistant code shared between Frontend and Backend"
+description   = "A digital assistant progressive web app"
 license       = "MIT"
 srcDir        = "src"
+bin           = @["assistant"]
 
 # Dependencies
 

@@ -1,4 +1,4 @@
-import assistant_shared
+import assistantpkg/shared/hello
 import unittest
 import strformat
 
