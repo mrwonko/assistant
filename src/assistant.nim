@@ -2,6 +2,8 @@ import assistantpkg/shared/hello
 import macros
 import strformat
 import strutils
+import asynchttpserver, asyncdispatch
+from posix import onSignal, SIGINT
 
 proc compileFrontend(): string {.compileTime.} =
     hint "[building frontend...]"
@@ -18,5 +20,33 @@ proc compileFrontend(): string {.compileTime.} =
 
 const frontendCode = compileFrontend()
 
-echo &"// code that will output {helloString}:"
-echo frontendCode
+echo &"starting server that will serve {helloString}"
+
+var server = newAsyncHttpServer()
+
+onSignal(SIGINT):
+    echo "closing server"
+    server.close()
+
+proc serveHttp(req: Request) {.async.} =
+    if req.url.path == "/hello.js":
+        await req.respond(Http200, frontendCode)
+    else:
+        await req.respond(Http404, "not found\n")
+
+proc safeServe(server: AsyncHttpServer, port: Port, handler: proc(req: Request): Future[void] {.gcsafe.}) {.async.} =
+    try:
+        await server.serve(port, handler)
+    except:
+        let name = getCurrentException().name
+        let message = getCurrentExceptionMsg()
+        echo &"serve threw {name} exception: {message}"
+
+try:
+    waitFor server.safeServe(Port(8080), serveHttp)
+except:
+    let name = getCurrentException().name
+    let message = getCurrentExceptionMsg()
+    echo &"safeServe threw {name} exception: {message}"
+echo "server closed"
+
