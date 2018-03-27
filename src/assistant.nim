@@ -24,7 +24,7 @@ echo &"starting server that will serve {helloString}"
 
 var server = newAsyncHttpServer()
 
-onSignal(SIGINT):
+onSignal(SIGINT): # FIXME: doesn't quite work yet, probably not necessary for now though
     echo "closing server"
     server.close()
 
@@ -35,7 +35,7 @@ proc serveHttp(req: Request) {.async.} =
         await req.respond(Http404, "not found\n")
 
 proc safeServe(server: AsyncHttpServer, port: Port, handler: proc(req: Request): Future[void] {.gcsafe.}) {.async.} =
-    try:
+    try: # FIXME: doesn't quite work yet, probably not necessary for now though
         await server.serve(port, handler)
     except:
         let name = getCurrentException().name
